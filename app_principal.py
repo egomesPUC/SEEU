@@ -3,7 +3,7 @@ import pandas as pd
 import altair as alt
 
 st.set_page_config(
-    page_title="Dashboard - Processos / Partes Moradores de Rua",
+    page_title="Dashboard - Processos / Partes Moradores de Rua / SEEU",
     layout="wide"
 )
 
@@ -12,7 +12,7 @@ st.set_page_config(
 # ==========================
 @st.cache_data
 def load_data(path: str) -> pd.DataFrame:
-    df = pd.read_csv(path,sep=",")
+    df = pd.read_csv(path,sep=";")
 
     # Normalização de tipos
     if "datarecebimento" in df.columns:
@@ -20,7 +20,8 @@ def load_data(path: str) -> pd.DataFrame:
             df["datarecebimento"], errors="coerce"
         )
         # Mês/ano (como data no 1º dia do mês) para o slider
-        df["data_mes"] = df["datarecebimento"].dt.to_period("M").dt.to_timestamp().dt.date
+        df["data_mes"] = df["datarecebimento"].dt.to_period("M").dt.to_timestamp()#.dt.date
+        
 
     # Egresso -> boolean
     if "Egresso" in df.columns:
@@ -108,7 +109,7 @@ def main():
     if "tipodocumento" in filtered_df.columns:
         tipos_disp = (
             filtered_df["tipodocumento"]
-            .dropna()
+            #.dropna()
             .astype(str)
             .sort_values()
             .unique()
@@ -150,23 +151,32 @@ def main():
         else:
             df_tab1 = filtered_df.copy()
 
-            # Slider por data de recebimento (mês/ano)
-            if "data_mes" in df_tab1.columns and df_tab1["data_mes"].notna().any():
-                min_mes = df_tab1["data_mes"].min()
-                max_mes = df_tab1["data_mes"].max()
+           # Slider por data de recebimento (mês/ano) usando select_slider
 
-                data_ini, data_fim = st.slider(
+            # 1) Garanta que a data original virou datetime (ajuste o nome da coluna se for outro)
+            df_tab1["datarecebimento_dt"] = pd.to_datetime(
+                df_tab1["datarecebimento"], errors="coerce", dayfirst=True
+            )
+
+            # 2) Crie o mês como string YYYY/MM
+            df_tab1["data_mes_ym"] = df_tab1["datarecebimento_dt"].dt.strftime("%Y/%m")
+
+            # 3) Monte as opções do slider (somente meses que existem no DF), já ordenadas
+            opcoes = sorted(df_tab1["data_mes_ym"].dropna().unique().tolist())
+
+            if opcoes:
+                ini, fim = st.select_slider(
                     "Período por Data de Recebimento (Mês/Ano)",
-                    min_value=min_mes,
-                    max_value=max_mes,
-                    value=(min_mes, max_mes),
-                    format="M/Y",  # mês/ano no slider
+                    options=opcoes,
+                    value=(opcoes[0], opcoes[-1]),
                 )
 
-                df_tab1 = df_tab1[
-                    (df_tab1["data_mes"] >= data_ini)
-                    & (df_tab1["data_mes"] <= data_fim)
-                ]
+                # 4) Filtra por string (YYYY/MM)
+                # Se você quiser MANTER linhas sem data, deixe o "isna() |"
+                mask = df_tab1["data_mes_ym"].isna() | df_tab1["data_mes_ym"].between(ini, fim, inclusive="both")
+                df_tab1 = df_tab1[mask]
+
+             
 
             if df_tab1.empty:
                 st.warning("Nenhum registro dentro do período selecionado.")
@@ -207,8 +217,8 @@ def main():
                 c3.metric("Qtde de partes (sem repetição)", int(qt_partes_unicas))
 
                 c4, c5 = st.columns(2)
-                c4.metric("Qtde de Moradores de Rua com Flag de Identificação Geral", int(qt_morador_de_rua_identificadoGeral))
-                c5.metric("Qtde de Moradores de Rua com Flag de Identificação Filtrado", int(qt_morador_de_rua_identificadoFiltrado))
+                c4.metric("Qtde de Partes Identificados como Moradores de Rua com Flag GERAL", int(qt_morador_de_rua_identificadoGeral))
+                c5.metric("Qtde de Moradores de Rua com Flag com PROCESSOS e FILTRADO", int(qt_morador_de_rua_identificadoFiltrado))
 
                 # ===== GRÁFICO DE BARRAS POR ESTADO =====
                 # Queremos: para cada estado,

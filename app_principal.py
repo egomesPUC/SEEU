@@ -12,7 +12,7 @@ st.set_page_config(
 # ==========================
 @st.cache_data
 def load_data(path: str) -> pd.DataFrame:
-    df = pd.read_excel(path)
+    df = pd.read_csv(path,sep=",")
 
     # Normalização de tipos
     if "datarecebimento" in df.columns:
@@ -52,7 +52,7 @@ def load_data(path: str) -> pd.DataFrame:
 # AJUSTE o caminho conforme seu arquivo
 def main():
 
-    DATA_PATH = "SEEU_DASH.xlsx"
+    DATA_PATH = "SEEU_DASH.csv"
     df = load_data(DATA_PATH)
 
     # ==========================

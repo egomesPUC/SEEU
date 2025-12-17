@@ -2,7 +2,7 @@
 import streamlit as st
 import app_principal  # importa o arquivo da app principal
 import hashlib
-from streamlit_js_eval import get_page_location
+#from streamlit_js_eval import get_page_location
 
 st.set_page_config(
     page_title="Dashboard - Peças de Pessoas em Situação de Rua - SEEU",
@@ -51,11 +51,11 @@ def login_screen():
 
 def main():
     # Verifica se já está logado
-    page_location = get_page_location()
-    if page_location['hostname']=="localhost":
-        st.session_state.logged_in = True
-        st.session_state.username = "DEVELOP"
-        st.session_state.login_failed = False
+    #page_location = get_page_location()
+    #if page_location['hostname']=="localhost":
+    #    st.session_state.logged_in = True
+    #    st.session_state.username = "DEVELOP"
+    #    st.session_state.login_failed = False
     
     if not st.session_state.get("logged_in"):
         login_screen()

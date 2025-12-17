@@ -35,9 +35,9 @@ def load_data(path: str) -> pd.DataFrame:
         df["Egresso_bool"] = False
 
     # Capital -> boolean
-    if "capital" in df.columns:
+    if "Capital" in df.columns:
         df["capital_bool"] = (
-            df["capital"]
+            df["Capital"]
             .astype(str)
             .str.strip()
             .str.lower()
@@ -66,7 +66,7 @@ def main():
     # --- 1) Filtro Egressos (radio) ---
     if "Egresso_bool" in filtered_df.columns:
         egresso_opt = st.sidebar.radio(
-            "Egressos",
+            "PARTES (NO PROCESSO)",
             options=["Todos", "Somente egressos"],
             index=0,
         )
@@ -76,7 +76,7 @@ def main():
     # --- 2) Filtro Capital (checkbox) ---
     if "capital_bool" in filtered_df.columns:
         only_capital = st.sidebar.checkbox(
-            "Capital (apenas municípios capital == true)",
+            "Capital (apenas capital de UF e Brasília)",
             value=False,
         )
         if only_capital:
@@ -160,7 +160,7 @@ def main():
                     min_value=min_mes,
                     max_value=max_mes,
                     value=(min_mes, max_mes),
-                    format="%-m/%Y",  # mês/ano no slider
+                    format="M/Y",  # mês/ano no slider
                 )
 
                 df_tab1 = df_tab1[
@@ -179,8 +179,8 @@ def main():
                 # 1) Qtde de cumprimento de cartório (cada linha = 1 cumprimento)
                 qt_cumprimento = len(df_tab1)
                 # 2) Qtde de processos sem repetição (campo numeroprocesso)
-                if "numero" in df_tab1.columns:
-                    qt_proc_unicos = df_tab1["numero"].nunique()
+                if "numeroprocesso" in df_tab1.columns:
+                    qt_proc_unicos = df_tab1["numeroprocesso"].nunique()
                 else:
                     qt_proc_unicos = 0
 
@@ -188,13 +188,27 @@ def main():
                 if "codparte" in df_tab1.columns:
                     qt_partes_unicas = df_tab1["codparte"].nunique()
                 else:
-                    qt_partes_unicas = 0
+                    qt_partes_unicas=0
+
+                
+                # 4) Qtde de partes com flag de morador de rua (campo codparte)
+                qt_morador_de_rua_identificado = 0
+                if "pessoaemsituacaoderua" in df_tab1.columns:
+                    dfAux=df.query("pessoaemsituacaoderua==True")
+                    qt_morador_de_rua_identificadoGeral = dfAux["codparte"].nunique()
+                    dfAux=df_tab1.query("pessoaemsituacaoderua==True")
+                    qt_morador_de_rua_identificadoFiltrado = dfAux["codparte"].nunique()
+                
 
                 st.markdown("### Quadro Resumo")
                 c1, c2, c3 = st.columns(3)
                 c1.metric("Qtde de cumprimento de cartório", int(qt_cumprimento))
                 c2.metric("Qtde de processos (sem repetição)", int(qt_proc_unicos))
                 c3.metric("Qtde de partes (sem repetição)", int(qt_partes_unicas))
+
+                c4, c5 = st.columns(2)
+                c4.metric("Qtde de Moradores de Rua com Flag de Identificação Geral", int(qt_morador_de_rua_identificadoGeral))
+                c5.metric("Qtde de Moradores de Rua com Flag de Identificação Filtrado", int(qt_morador_de_rua_identificadoFiltrado))
 
                 # ===== GRÁFICO DE BARRAS POR ESTADO =====
                 # Queremos: para cada estado,

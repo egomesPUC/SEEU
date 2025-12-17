@@ -5,7 +5,7 @@ import hashlib
 from streamlit_js_eval import get_page_location
 
 st.set_page_config(
-    page_title="Dashboard - Peças de Pessoas em Situação de Rua",
+    page_title="Dashboard - Peças de Pessoas em Situação de Rua - SEEU",
     layout="wide"
 )
 # DICIONÁRIO DE USUÁRIOS (exemplo simples)
